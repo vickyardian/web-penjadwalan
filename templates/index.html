@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aplikasi Penjadwalan Tugas Karyawan</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        backdrop-filter: blur(10px);
+      }
+
+      h1 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 30px;
+        font-size: 2.5em;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+      }
+
+      .section h2 {
+        color: #444;
+        margin-bottom: 15px;
+        font-size: 1.4em;
+        border-bottom: 2px solid #667eea;
+        padding-bottom: 8px;
+      }
+
+      .input-group {
+        margin-bottom: 15px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        color: #555;
+      }
+
+      input[type="text"],
+      textarea {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e1e5e9;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.3s ease;
+      }
+
+      input[type="text"]:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      .btn {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        margin: 5px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-secondary {
+        background: linear-gradient(45deg, #74b9ff, #0984e3);
+      }
+
+      .matrix-container {
+        overflow-x: auto;
+        margin-top: 15px;
+      }
+
+      .matrix-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+      }
+
+      .matrix-table th,
+      .matrix-table td {
+        border: 2px solid #e1e5e9;
+        padding: 8px;
+        text-align: center;
+        min-width: 80px;
+      }
+
+      .matrix-table th {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        font-weight: 600;
+      }
+
+      .matrix-table input {
+        width: 60px;
+        padding: 5px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        text-align: center;
+      }
+
+      .results {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        border: none;
+        margin-top: 20px;
+      }
+
+      .assignment-item {
+        background: white;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 10px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: transform 0.2s ease;
+      }
+
+      .assignment-item:hover {
+        transform: translateX(5px);
+      }
+
+      .assignment-info {
+        flex-grow: 1;
+      }
+
+      .assignment-cost {
+        background: #667eea;
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: 600;
+      }
+
+      .total-cost {
+        background: linear-gradient(45deg, #00b894, #00a085);
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+        font-size: 1.2em;
+        font-weight: 600;
+        margin-top: 15px;
+      }
+
+      .error {
+        background: #ff7675;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+      }
+
+      .loading {
+        display: none;
+        text-align: center;
+        padding: 20px;
+      }
+
+      .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+
+      @media (max-width: 768px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .container {
+          padding: 15px;
+        }
+
+        h1 {
+          font-size: 2em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Aplikasi Penjadwalan Tugas Karyawan</h1>
+      <p style="text-align: center; color: #666; margin-bottom: 30px">
+        Menggunakan Hungarian Algorithm untuk penugasan optimal
+      </p>
+
+      <div class="grid">
+        <div class="section">
+          <h2>Input Data</h2>
+
+          <div class="input-group">
+            <label for="employees"
+              >Daftar Karyawan (pisahkan dengan koma):</label
+            >
+            <input
+              type="text"
+              id="employees"
+              placeholder="Andi, Budi, Citra, Dani"
+            />
+          </div>
+
+          <div class="input-group">
+            <label for="tasks">Daftar Tugas (pisahkan dengan koma):</label>
+            <input
+              type="text"
+              id="tasks"
+              placeholder="Task A, Task B, Task C, Task D"
+            />
+          </div>
+
+          <button class="btn btn-secondary" onclick="generateMatrix()">
+            Generate Matriks Biaya
+          </button>
+          <button class="btn btn-secondary" onclick="loadExample()">
+            Load Contoh Data
+          </button>
+        </div>
+
+        <div class="section">
+          <h2>Matriks Biaya</h2>
+          <p style="color: #666; margin-bottom: 15px">
+            Isi nilai biaya untuk setiap kombinasi karyawan dan tugas (nilai
+            lebih rendah = lebih disukai)
+          </p>
+          <div class="matrix-container" id="matrixContainer">
+            <p>Silakan input karyawan dan tugas terlebih dahulu</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" style="text-align: center">
+        <button class="btn" onclick="solveAssignment()">
+          Hitung Penugasan Optimal
+        </button>
+      </div>
+
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Sedang menghitung...</p>
+      </div>
+
+      <div id="error"></div>
+
+      <div class="section results" id="results" style="display: none">
+        <h2>Hasil Penugasan Optimal</h2>
+        <div id="assignmentsList"></div>
+        <div id="totalCost"></div>
+      </div>
+    </div>
+
+    <script>
+      let currentMatrix = [];
+
+      function generateMatrix() {
+        const employeesText = document.getElementById("employees").value.trim();
+        const tasksText = document.getElementById("tasks").value.trim();
+
+        if (!employeesText || !tasksText) {
+          showError("Silakan isi daftar karyawan dan tugas terlebih dahulu");
+          return;
+        }
+
+        const employees = employeesText.split(",").map((e) => e.trim());
+        const tasks = tasksText.split(",").map((t) => t.trim());
+
+        if (employees.length !== tasks.length) {
+          showError("Jumlah karyawan dan tugas harus sama");
+          return;
+        }
+
+        generateMatrixTable(employees, tasks);
+      }
+
+      function generateMatrixTable(employees, tasks) {
+        const container = document.getElementById("matrixContainer");
+
+        let html =
+          '<table class="matrix-table"><thead><tr><th>Karyawan / Tugas</th>';
+
+        tasks.forEach((task) => {
+          html += `<th>${task}</th>`;
+        });
+        html += "</tr></thead><tbody>";
+
+        employees.forEach((employee, i) => {
+          html += `<tr><td><strong>${employee}</strong></td>`;
+          tasks.forEach((task, j) => {
+            html += `<td><input type="number" id="cell_${i}_${j}" value="1" min="0" max="100"></td>`;
+          });
+          html += "</tr>";
+        });
+
+        html += "</tbody></table>";
+        container.innerHTML = html;
+
+        // Initialize current matrix
+        currentMatrix = Array(employees.length)
+          .fill()
+          .map(() => Array(tasks.length).fill(1));
+      }
+
+      function loadExample() {
+        fetch("/api/example_data")
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("employees").value =
+              data.employees.join(", ");
+            document.getElementById("tasks").value = data.tasks.join(", ");
+
+            generateMatrixTable(data.employees, data.tasks);
+
+            // Fill matrix with example data
+            data.cost_matrix.forEach((row, i) => {
+              row.forEach((value, j) => {
+                document.getElementById(`cell_${i}_${j}`).value = value;
+              });
+            });
+          })
+          .catch((error) => {
+            showError("Gagal memuat contoh data: " + error.message);
+          });
+      }
+
+      function solveAssignment() {
+        const employeesText = document.getElementById("employees").value.trim();
+        const tasksText = document.getElementById("tasks").value.trim();
+
+        if (!employeesText || !tasksText) {
+          showError("Silakan isi daftar karyawan dan tugas terlebih dahulu");
+          return;
+        }
+
+        const employees = employeesText.split(",").map((e) => e.trim());
+        const tasks = tasksText.split(",").map((t) => t.trim());
+
+        // Get cost matrix values
+        const costMatrix = [];
+        for (let i = 0; i < employees.length; i++) {
+          const row = [];
+          for (let j = 0; j < tasks.length; j++) {
+            const cell = document.getElementById(`cell_${i}_${j}`);
+            if (!cell) {
+              showError("Silakan generate matriks biaya terlebih dahulu");
+              return;
+            }
+            row.push(parseInt(cell.value) || 0);
+          }
+          costMatrix.push(row);
+        }
+
+        showLoading(true);
+        hideError();
+
+        const data = {
+          employees: employees,
+          tasks: tasks,
+          cost_matrix: costMatrix,
+        };
+
+        // Set data first
+        fetch("/api/set_data", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        })
+          .then((response) => response.json())
+          .then((result) => {
+            if (result.error) {
+              throw new Error(result.error);
+            }
+
+            // Then solve
+            return fetch("/api/solve", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+          })
+          .then((response) => response.json())
+          .then((result) => {
+            showLoading(false);
+
+            if (result.error) {
+              throw new Error(result.error);
+            }
+
+            displayResults(result.assignments, result.total_cost);
+          })
+          .catch((error) => {
+            showLoading(false);
+            showError("Error: " + error.message);
+          });
+      }
+
+      function displayResults(assignments, totalCost) {
+        const resultsDiv = document.getElementById("results");
+        const assignmentsList = document.getElementById("assignmentsList");
+        const totalCostDiv = document.getElementById("totalCost");
+
+        let html = "";
+        assignments.forEach((assignment, index) => {
+          html += `
+                    <div class="assignment-item">
+                        <div class="assignment-info">
+                            <strong>${assignment.employee}</strong> → <em>${assignment.task}</em>
+                        </div>
+                        <div class="assignment-cost">Biaya: ${assignment.cost}</div>
+                    </div>
+                `;
+        });
+
+        assignmentsList.innerHTML = html;
+        totalCostDiv.innerHTML = `<div class="total-cost">Total Biaya Optimal: ${totalCost}</div>`;
+
+        resultsDiv.style.display = "block";
+        resultsDiv.scrollIntoView({ behavior: "smooth" });
+      }
+
+      function showError(message) {
+        const errorDiv = document.getElementById("error");
+        errorDiv.innerHTML = `<div class="error">❌ ${message}</div>`;
+      }
+
+      function hideError() {
+        document.getElementById("error").innerHTML = "";
+      }
+
+      function showLoading(show) {
+        document.getElementById("loading").style.display = show
+          ? "block"
+          : "none";
+      }
+
+      // Initialize with example data on page load
+      window.onload = function () {
+        loadExample();
+      };
+    </script>
+  </body>
+</html>

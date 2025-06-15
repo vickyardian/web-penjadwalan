@@ -1,0 +1,28 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+venv/
+
+# Editor config
+.vscode/
+*.code-workspace
+
+# Python-related
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+
+# Environment and deployment files
+.env
+*.log
+*.bak
+*.tmp
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
