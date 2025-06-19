@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="management-container">
+    <h1>Kelola Data Karyawan</h1>
+    
+    <div class="add-form">
+        <h2>Tambah Karyawan Baru</h2>
+        <form method="POST">
+            <div class="form-group">
+                <label for="nama">Nama Karyawan:</label>
+                <input type="text" id="nama" name="nama" required>
+            </div>
+            <button type="submit" class="btn">Tambah Karyawan</button>
+        </form>
+    </div>
+
+    <div class="data-table">
+        <h2>Daftar Karyawan</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nama</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employees %}
+                <tr>
+                    <td>{{ emp.id }}</td>
+                    <td>{{ emp.nama }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="assignment-container">
+    <h1>Buat Penugasan Baru</h1>
+    <form method="POST" action="{{ url_for('assignment_result') }}">
+        <table class="cost-matrix">
+            <thead>
+                <tr>
+                    <th>Karyawan \ Tugas</th>
+                    {% for task in tasks %}
+                    <th>{{ task.nama }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employees %}
+                <tr>
+                    <td>{{ emp.nama }}</td>
+                    {% for task in tasks %}
+                    <td>
+                        <input type="number" min="0" step="0.01" 
+                               name="cost_{{ emp.id }}_{{ task.id }}" 
+                               value="0" required>
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-primary">Hitung Penugasan Optimal</button>
+    </form>
+</div>
+{% endblock %}

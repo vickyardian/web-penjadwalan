@@ -1,119 +1,180 @@
-from flask import Flask, render_template, request, jsonify
-import numpy as np # type: ignore
-from scipy.optimize import linear_sum_assignment # type: ignore
-import json
-import os
+# Impor library yang diperlukan
+from flask import Flask, render_template, request, redirect, url_for, flash
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+import numpy as np
+from scipy.optimize import linear_sum_assignment
+import locale
 
+# Inisialisasi aplikasi Flask
 app = Flask(__name__)
+app.secret_key = 'secret_key_rahasia'
 
-class HungarianScheduler:
-    def __init__(self):
-        self.employees = []
-        self.tasks = []
-        self.cost_matrix = []
-    
-    def set_employees(self, employees):
-        """Set daftar karyawan"""
-        self.employees = employees
-    
-    def set_tasks(self, tasks):
-        """Set daftar tugas"""
-        self.tasks = tasks
-    
-    def set_cost_matrix(self, cost_matrix):
-        """Set matriks biaya/preferensi"""
-        self.cost_matrix = np.array(cost_matrix)
-    
-    def solve(self):
-        """Menyelesaikan masalah penugasan menggunakan Hungarian Algorithm"""
-        if len(self.cost_matrix) == 0:
-            return None, None, 0
-        
-        # Menggunakan scipy untuk Hungarian Algorithm
-        row_indices, col_indices = linear_sum_assignment(self.cost_matrix)
-        
-        # Menghitung total biaya
-        total_cost = self.cost_matrix[row_indices, col_indices].sum()
-        
-        # Membuat hasil assignment
-        assignments = []
-        for i, j in zip(row_indices, col_indices):
-            assignments.append({
-                'employee': self.employees[i],
-                'task': self.tasks[j],
-                'cost': int(self.cost_matrix[i, j])
-            })
-        
-        return assignments, total_cost
+# --- Konfigurasi Format Rupiah ---
 
-# Instance global scheduler
-scheduler = HungarianScheduler()
+# Atur locale ke Indonesia agar pemisah ribuan menggunakan titik (.).
+# Blok try-except ini untuk mencegah error jika locale 'id_ID' tidak terinstall di sistem.
+try:
+    locale.setlocale(locale.LC_ALL, 'id_ID.UTF-8')
+except locale.Error:
+    print("Peringatan: Locale 'id_ID.UTF-8' tidak ditemukan. Menggunakan format default.")
+
+def format_rupiah(value):
+    """
+    Custom filter untuk Jinja2 yang memformat angka menjadi string Rupiah.
+    Fungsi ini akan memperlakukan nilai input sebagai ribuan.
+    Contoh: nilai 10 akan diformat menjadi 'Rp 10.000'.
+    """
+    if value is None:
+        return "Rp 0"
+    
+    # Kalikan nilai input dengan 1000 untuk mengubahnya menjadi format ribuan
+    value_in_thousands = value * 1000
+    
+    # Format angka yang sudah dikalikan tersebut dengan pemisah ribuan (titik) dan tanpa desimal
+    return locale.format_string("Rp %.0f", value_in_thousands, grouping=True)
+
+# Daftarkan fungsi di atas sebagai filter Jinja2 dengan nama 'rupiah'
+app.jinja_env.filters['rupiah'] = format_rupiah
+
+# --- Akhir Konfigurasi Format Rupiah ---
+
+
+# Inisialisasi Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+# Data in-memory (simulasi database)
+users = {'admin': {'password': '1234'}}
+employees = [
+    {'id': 1, 'nama': 'Budi Santoso'},
+    {'id': 2, 'nama': 'Siti Rahayu'},
+    {'id': 3, 'nama': 'Ahmad Wijaya'},
+    {'id': 4, 'nama': 'Vicky Ardiansyah'}
+]
+tasks = [
+    {'id': 1, 'nama': 'Desain UI/UX'},
+    {'id': 2, 'nama': 'Pengembangan Backend'},
+    {'id': 3, 'nama': 'Testing Aplikasi'},
+    {'id': 4, 'nama': 'Pengembangan Frontend'}
+]
+assignments = []
+
+# Model User untuk Flask-Login
+class User(UserMixin):
+    def __init__(self, username):
+        self.id = username
+
+@login_manager.user_loader
+def load_user(user_id):
+    if user_id in users:
+        return User(user_id)
+    return None
+
+# Rute-rute aplikasi
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        if username in users and users[username]['password'] == password:
+            user = User(username)
+            login_user(user)
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Username atau password salah!', 'danger')
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
 
 @app.route('/')
-def index():
-    return render_template('index.html')
+@login_required
+def dashboard():
+    return render_template('dashboard.html', 
+                           employee_count=len(employees),
+                           task_count=len(tasks))
 
-@app.route('/api/set_data', methods=['POST'])
-def set_data():
-    """API untuk mengatur data karyawan, tugas, dan matriks biaya"""
-    try:
-        data = request.get_json()
-        
-        employees = data.get('employees', [])
-        tasks = data.get('tasks', [])
-        cost_matrix = data.get('cost_matrix', [])
-        
-        if len(employees) == 0 or len(tasks) == 0:
-            return jsonify({'error': 'Karyawan dan tugas tidak boleh kosong'}), 400
-        
-        if len(employees) != len(cost_matrix) or len(tasks) != len(cost_matrix[0]):
-            return jsonify({'error': 'Dimensi matriks biaya tidak sesuai'}), 400
-        
-        scheduler.set_employees(employees)
-        scheduler.set_tasks(tasks)
-        scheduler.set_cost_matrix(cost_matrix)
-        
-        return jsonify({'message': 'Data berhasil diatur'})
+@app.route('/karyawan', methods=['GET', 'POST'])
+@login_required
+def manage_employees():
+    if request.method == 'POST':
+        nama = request.form.get('nama')
+        if nama:
+            new_id = max(emp['id'] for emp in employees) + 1 if employees else 1
+            employees.append({'id': new_id, 'nama': nama})
+            flash('Karyawan berhasil ditambahkan!', 'success')
+    return render_template('kelola_karyawan.html', employees=employees)
+
+@app.route('/tugas', methods=['GET', 'POST'])
+@login_required
+def manage_tasks():
+    if request.method == 'POST':
+        nama = request.form.get('nama')
+        if nama:
+            new_id = max(task['id'] for task in tasks) + 1 if tasks else 1
+            tasks.append({'id': new_id, 'nama': nama})
+            flash('Tugas berhasil ditambahkan!', 'success')
+    return render_template('kelola_tugas.html', tasks=tasks)
+
+@app.route('/penugasan/baru')
+@login_required
+def new_assignment():
+    return render_template('buat_penugasan.html', 
+                           employees=employees, 
+                           tasks=tasks)
+
+@app.route('/penugasan/hasil', methods=['POST'])
+@login_required
+def assignment_result():
+    # Bangun matriks biaya dari form input
+    cost_matrix = []
+    for emp in employees:
+        row = []
+        for task in tasks:
+            cost_key = f"cost_{emp['id']}_{task['id']}"
+            cost_value = float(request.form.get(cost_key, 0))
+            row.append(cost_value)
+        cost_matrix.append(row)
     
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/solve', methods=['POST'])
-def solve_assignment():
-    """API untuk menyelesaikan masalah penugasan"""
-    try:
-        assignments, total_cost = scheduler.solve()
-        
-        if assignments is None:
-            return jsonify({'error': 'Tidak ada data untuk diproses'}), 400
-        
-        return jsonify({
-            'assignments': assignments,
-            'total_cost': int(total_cost),
-            'success': True
+    # Konversi ke numpy array untuk diproses
+    cost_matrix = np.array(cost_matrix)
+    
+    # Jalankan algoritma Hungarian untuk optimasi
+    row_ind, col_ind = linear_sum_assignment(cost_matrix)
+    total_cost = cost_matrix[row_ind, col_ind].sum()
+    
+    # Siapkan hasil penugasan untuk ditampilkan di template
+    hasil_penugasan = []
+    for i in range(len(row_ind)):
+        karyawan = employees[row_ind[i]]
+        tugas = tasks[col_ind[i]]
+        biaya = cost_matrix[row_ind[i], col_ind[i]]
+        hasil_penugasan.append({
+            'karyawan': karyawan['nama'],
+            'tugas': tugas['nama'],
+            'biaya': biaya
         })
     
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    # Simpan histori penugasan (opsional)
+    assignments.append({
+        'matrix': cost_matrix.tolist(),
+        'hasil': hasil_penugasan,
+        'total_biaya': total_cost
+    })
+    
+    # Render halaman hasil dengan data yang sudah dihitung
+    return render_template('hasil_penugasan.html', 
+                           hasil=hasil_penugasan,
+                           total_cost=total_cost)
 
-@app.route('/api/example_data', methods=['GET'])
-def get_example_data():
-    """API untuk mendapatkan contoh data"""
-    example_data = {
-        'employees': ['Andi', 'Budi', 'Citra', 'Dani'],
-        'tasks': ['Task A', 'Task B', 'Task C', 'Task D'],
-        'cost_matrix': [
-            [9, 2, 7, 8],
-            [6, 4, 3, 7],
-            [5, 8, 1, 8],
-            [7, 6, 9, 4]
-        ]
-    }
-    return jsonify(example_data)
-
+# Menjalankan aplikasi
 if __name__ == '__main__':
-    # untuk development
     app.run(debug=True)
-else:
+else: 
     # untuk production 
     application = app

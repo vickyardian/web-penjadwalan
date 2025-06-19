@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="management-container">
+    <h1>Kelola Data Tugas</h1>
+    
+    <div class="add-form">
+        <h2>Tambah Tugas Baru</h2>
+        <form method="POST">
+            <div class="form-group">
+                <label for="nama">Nama Tugas:</label>
+                <input type="text" id="nama" name="nama" required>
+            </div>
+            <button type="submit" class="btn">Tambah Tugas</button>
+        </form>
+    </div>
+
+    <div class="data-table">
+        <h2>Daftar Tugas</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nama</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                <tr>
+                    <td>{{ task.id }}</td>
+                    <td>{{ task.nama }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

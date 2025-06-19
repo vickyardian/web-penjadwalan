@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="result-container">
+    <h1>Hasil Penugasan Optimal</h1>
+    
+    <div class="summary-card">
+        <h2>Total Biaya Optimal</h2>
+        <p class="total-cost">{{ total_cost|rupiah }}</p>
+    </div>
+
+    <div class="assignment-results">
+        <h2>Detail Penugasan</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Karyawan</th>
+                    <th>Tugas</th>
+                    <th>Biaya</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in hasil %}
+                <tr>
+                    <td>{{ item.karyawan }}</td>
+                    <td>{{ item.tugas }}</td>
+                    <td>{{ item.biaya|rupiah }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="action-buttons">
+        <a href="{{ url_for('dashboard') }}" class="btn">Kembali ke Dasbor</a>
+        <a href="{{ url_for('new_assignment') }}" class="btn btn-primary">Buat Penugasan Baru</a>
+    </div>
+</div>
+{% endblock %}

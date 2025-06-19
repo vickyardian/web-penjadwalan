@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Penugasan Karyawan</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <div class="layout-container">
+        <div class="sidebar">
+            <h2>Menu</h2>
+            <ul>
+                <li><a href="{{ url_for('dashboard') }}">Dasbor</a></li>
+                <li><a href="{{ url_for('manage_employees') }}">Kelola Karyawan</a></li>
+                <li><a href="{{ url_for('manage_tasks') }}">Kelola Tugas</a></li>
+                <li><a href="{{ url_for('new_assignment') }}">Buat Penugasan</a></li>
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            </ul>
+        </div>
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+    {% else %}
+        {% block login_content %}{% endblock %}
+    {% endif %}
+</body>
+</html>
