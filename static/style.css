@@ -301,19 +301,18 @@ th {
 }
 
 /* Flash messages */
-.flash {
-    padding: 10px 15px;
-    margin-top: 15px;
-    border-radius: 4px;
-    text-align: center;
+.alert {
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
 }
 
-.flash.success {
+.alert-success {
     background-color: #d4edda;
     color: #155724;
 }
 
-.flash.danger {
+.alert-danger {
     background-color: #f8d7da;
     color: #721c24;
 }

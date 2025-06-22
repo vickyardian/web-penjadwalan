@@ -20,6 +20,16 @@
             </ul>
         </div>
         <div class="content">
+            <!-- TAMPILKAN FLASH MESSAGE DI SINI -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+            <!-- AKHIR FLASH MESSAGE -->
+
             {% block content %}{% endblock %}
         </div>
     </div>
